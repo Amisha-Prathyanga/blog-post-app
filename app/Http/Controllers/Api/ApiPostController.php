@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Post;
+use App\Services\PostService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -12,7 +13,13 @@ class ApiPostController extends Controller
 {
     use AuthorizesRequests;
 
-    //create new post
+    protected $postService;
+
+    public function __construct(PostService $postService)
+    {
+        $this->postService = $postService;
+    }
+
     public function store(Request $request)
     {
         $validatedData = $request->validate([
@@ -20,32 +27,29 @@ class ApiPostController extends Controller
             'content' => 'required|string'
         ]);
 
-        $post = Auth::user()->posts()->create($validatedData);
+        $post = $this->postService->createPost($validatedData);
 
         return response()->json($post, 201);
     }
 
-    //list all posts
-    public function index()
+    public function index(Request $request)
     {
-        $posts = Auth::user()->posts()->latest()->paginate(10);
+        $posts = $this->postService->getUserPosts(
+            $request->input('title'), 
+            $request->input('per_page', 10)
+        );
 
         return response()->json($posts);
     }
 
-    //show post details
     public function show(Post $post)
     {
-        
         $this->authorize('view', $post);
-
         return response()->json($post);
     }
 
-    //update post 
     public function update(Request $request, Post $post)
     {
-        
         $this->authorize('update', $post);
 
         $validatedData = $request->validate([
@@ -53,33 +57,15 @@ class ApiPostController extends Controller
             'content' => 'sometimes|required|string'
         ]);
 
-        $post->update($validatedData);
+        $updatedPost = $this->postService->updatePost($post, $validatedData);
 
-        return response()->json($post);
+        return response()->json($updatedPost);
     }
 
-    //delete post
     public function destroy(Post $post)
     {
-        
         $this->authorize('delete', $post);
-
-        $post->delete();
-
+        $this->postService->deletePost($post);
         return response()->json(null, 204);
-    }
-
-    //seach post
-    public function search(Request $request)
-    {
-        $query = Auth::user()->posts();
-
-        if ($request->has('title')) {
-            $query->where('title', 'like', '%' . $request->input('title') . '%');
-        }
-
-        $posts = $query->latest()->paginate(10);
-
-        return response()->json($posts);
     }
 }

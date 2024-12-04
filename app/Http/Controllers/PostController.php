@@ -3,126 +3,87 @@
 namespace App\Http\Controllers;
 
 use App\Models\Post;
+use App\Services\PostService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
-use Illuminate\Support\Facades\Storage;
-
 
 class PostController extends Controller
 {
-
     use AuthorizesRequests;
     
-    //display posts
+    protected $postService;
+
+    public function __construct(PostService $postService)
+    {
+        $this->postService = $postService;
+    }
+    
     public function index()
     {
         $posts = Post::with('user')->latest()->paginate(10);
         return view('posts.index', ['posts' => $posts]);
     }
 
-    //create posts
     public function create()
     {
         return view('posts.create');
     }
 
-    //create posts
     public function store(Request $request)
     {
-        // Validate the request
         $validated = $request->validate([
             'title' => 'required|max:255',
             'content' => 'required',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
 
-        // Handle image upload
-        $imagePath = null;
-        if ($request->hasFile('image')) {
-            $imagePath = $request->file('image')->store('images', 'public'); 
-        }
-
-        // Create the post with the authenticated user's ID
-        $post = Auth::user()->posts()->create([
-            'title' => $validated['title'],
-            'content' => $validated['content'],
-            'image' => $imagePath,
-        ]);
+        $imageData = $request->hasFile('image') ? ['image' => $request->file('image')] : null;
+        
+        $post = $this->postService->createPost($validated, $imageData);
 
         flash()->success('Post has been added successfully.');
 
         return redirect()->route('posts.index', $post);
     }
 
-    //display post details
     public function show(Post $post)
     {
         return view('posts.show', compact('post'));
     }
 
-    //edit post
     public function edit(Post $post)
     {
-        
         $this->authorize('update', $post);
-
         return view('posts.edit', compact('post'));
     }
 
-    //update post
     public function update(Request $request, Post $post)
     {
-        
         $this->authorize('update', $post);
 
-        // Validate the request
-    $validated = $request->validate([
-        'title' => 'required|max:255',
-        'content' => 'required',
-        'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-    ]);
+        $validated = $request->validate([
+            'title' => 'required|max:255',
+            'content' => 'required',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+        ]);
 
-    
-    $imagePath = $post->image; 
-    if ($request->hasFile('image')) {
-       
-        if ($post->image) {
-            Storage::disk('public')->delete($post->image);
-        }
+        $imageData = $request->hasFile('image') ? ['image' => $request->file('image')] : null;
+        
+        $updatedPost = $this->postService->updatePost($post, $validated, $imageData);
 
-        $imagePath = $request->file('image')->store('images', 'public');
+        flash()->success('Post has been updated successfully.');
+        
+        return redirect()->route('posts.index', $updatedPost);
     }
 
-    
-    $post->update([
-        'title' => $validated['title'],
-        'content' => $validated['content'],
-        'image' => $imagePath, 
-    ]);
-
-    flash()->success('Post has been updated successfully.');
-    
-        return redirect()->route('posts.index', $post);
-            
-    }
-
-    //delete post
     public function destroy(Post $post)
     {
-        
         $this->authorize('delete', $post);
-
-        // Delete the image if it exists
-        if ($post->image) {
-            Storage::disk('public')->delete($post->image);
-        }
-
-        $post->delete();
+        $this->postService->deletePost($post);
 
         flash()->success('The post has been successfully deleted.');
 
         return redirect()->route('posts.index');
-            
     }
 }
