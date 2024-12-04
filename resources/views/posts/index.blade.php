@@ -1,11 +1,6 @@
 <x-app-layout>
 @section('content')
 <div class="container mt-4">
-    <!-- Authentication -->
-    <form method="POST" action="{{ route('logout') }}" class="mb-4">
-        @csrf
-        <button type="submit" class="btn btn-danger btn-block">Logout</button>
-    </form>
 
     <h1 class="mb-4 text-center text-primary">All Posts</h1>
 

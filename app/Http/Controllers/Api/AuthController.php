@@ -67,7 +67,7 @@ class AuthController extends Controller
     }
 
     /**
-     * Logout the user (revoke token)
+     * Logout the user 
      */
     public function logout(Request $request)
     {

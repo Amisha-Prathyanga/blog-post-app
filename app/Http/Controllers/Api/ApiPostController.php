@@ -33,7 +33,7 @@ class ApiPostController extends Controller
     //show post details
     public function show(Post $post)
     {
-        // Ensure the user can only access their own posts
+        
         $this->authorize('view', $post);
 
         return response()->json($post);
@@ -42,7 +42,7 @@ class ApiPostController extends Controller
     //update post 
     public function update(Request $request, Post $post)
     {
-        // Ensure the user can only update their own posts
+        
         $this->authorize('update', $post);
 
         $validatedData = $request->validate([
@@ -58,7 +58,7 @@ class ApiPostController extends Controller
     //delete post
     public function destroy(Post $post)
     {
-        // Ensure the user can only delete their own posts
+        
         $this->authorize('delete', $post);
 
         $post->delete();
