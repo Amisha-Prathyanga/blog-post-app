@@ -19,42 +19,48 @@
         </div>
     @endif
 
-    @forelse($posts as $post)
-        <div class="card mb-4 shadow-sm">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <div>
-                    <h5 class="card-title text-primary">{{ $post->title }}</h5>
-                    <small class="text-muted">By {{ $post->user->name }} on {{ $post->created_at->format('F d, Y') }}</small>
+    <div class="row">
+        @forelse($posts as $post)
+            <div class="col-md-4 mb-4">
+                <div class="card shadow-lg h-100">
+                @if($post->image)
+                <img src="{{ asset('storage/' . $post->image) }}" class="card-img-top" alt="Post image">
+
+                @else
+                    <img src="https://via.placeholder.com/350x200" class="card-img-top" alt="Default image">
+                @endif
+                    <div class="card-body">
+                        <h5 class="card-title text-primary">{{ $post->title }}</h5>
+                        <p class="card-text">{{ Str::limit($post->content, 150) }}</p>
+                        <p class="text-muted">By {{ $post->user->name }} on {{ $post->created_at->format('F d, Y') }}</p>
+
+                        <div class="d-flex justify-content-between align-items-center">
+                            <a href="{{ route('posts.show', $post) }}" class="btn btn-info btn-sm">
+                                <i class="fas fa-eye"></i> Read More
+                            </a>
+
+                            @can('update', $post)
+                            <div>
+                                <a href="{{ route('posts.edit', $post) }}" class="btn btn-sm btn-warning mr-2">
+                                    <i class="fas fa-edit"></i> Edit
+                                </a>
+                                <form action="{{ route('posts.destroy', $post) }}" method="POST" style="display:inline-block;" onsubmit="return confirm('Are you sure you want to delete this post?');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-sm btn-danger">
+                                        <i class="fas fa-trash"></i> Delete
+                                    </button>
+                                </form>
+                            </div>
+                            @endcan
+                        </div>
+                    </div>
                 </div>
-                
-                @can('update', $post)
-                <div class="post-actions">
-                    <a href="{{ route('posts.edit', $post) }}" class="btn btn-sm btn-warning mr-2">
-                        <i class="fas fa-edit"></i> Edit
-                    </a>
-                    <form action="{{ route('posts.destroy', $post) }}" 
-                          method="POST" 
-                          style="display:inline-block;"
-                          onsubmit="return confirm('Are you sure you want to delete this post?');">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" class="btn btn-sm btn-danger">
-                            <i class="fas fa-trash"></i> Delete
-                        </button>
-                    </form>
-                </div>
-                @endcan
             </div>
-            <div class="card-body">
-                <p class="card-text">{{ Str::limit($post->content, 200) }}</p>
-                <a href="{{ route('posts.show', $post) }}" class="btn btn-info btn-sm">
-                    <i class="fas fa-eye"></i> Read More
-                </a>
-            </div>
-        </div>
-    @empty
-        <p class="text-center text-muted">No posts found.</p>
-    @endforelse
+        @empty
+            <p class="text-center text-muted">No posts found.</p>
+        @endforelse
+    </div>
 
     <div class="d-flex justify-content-center">
         {{ $posts->links('pagination::bootstrap-4') }}

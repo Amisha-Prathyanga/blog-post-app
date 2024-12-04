@@ -10,17 +10,19 @@ class PostPolicy
 {
     use HandlesAuthorization;
 
-    /**
-     * Determine if the user can update the post.
-     */
+    
+    public function view(User $user, Post $post)
+    {
+        return $user->id === $post->user_id;
+    }
+
+    
     public function update(User $user, Post $post)
     {
         return $user->id === $post->user_id;
     }
 
-    /**
-     * Determine if the user can delete the post.
-     */
+    
     public function delete(User $user, Post $post)
     {
         return $user->id === $post->user_id;
